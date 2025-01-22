@@ -5,8 +5,10 @@
         "eslintcache",
         "jscoverage",
         "jspm",
+        "noaa",
         "overnightjs",
         "pids",
+        "stormglass",
         "wscript"
     ]
 }
