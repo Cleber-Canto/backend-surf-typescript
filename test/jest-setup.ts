@@ -10,11 +10,11 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  try {
-    if (server) {
-      await server.close(); // Fecha o servidor e libera recursos sem logs desnecessários
+  if (server) {
+    try {
+      await server.close(); // Fechar o servidor sem logs desnecessários
+    } catch (error) {
+      console.error('Erro ao fechar o servidor:', error); // Logar o erro caso ocorra
     }
-  } catch (error) {
-    console.error('Erro ao fechar o servidor:', error); // Apenas loga o erro se ocorrer
   }
 });
