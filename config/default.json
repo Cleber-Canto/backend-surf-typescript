@@ -4,10 +4,14 @@
     "database": {
       "mongoUrl": "mongodb://localhost:27017/surf-forecast"
     },
+    "auth": {
+      "key": "some-key",
+      "tokenExpiresIn": "20000000"
+    },
     "resources": {
       "StormGlass": {
         "apiUrl": "https://api.stormglass.io/v2",
-        "apiToken": "7c451bc6-e35a-11ef-9159-0242ac130003-7c451c2a-e35a-11ef-9159-0242ac130003"
+        "apiToken": "do-not-hard-code"
       }
     }
   }
