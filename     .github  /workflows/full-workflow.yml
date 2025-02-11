@@ -1,46 +1,34 @@
-name: Complete workflow
+name: Deploy to Render
 
 on:
   push:
     branches:
-      - main  # Ajuste para a branch de deploy, geralmente é a 'main'
+      - chapter-5-step-5  # Ou qualquer branch que você deseja monitorar para deploy
 
 jobs:
-  build:
+  deploy:
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [16.x]  # Versão do Node.js
-        mongodb-version: [5.0]  # Se precisar do MongoDB, senão remova
-
     steps:
-    - name: Check out repository
+    - name: Check out the repository
       uses: actions/checkout@v2
 
-    - run: git fetch --prune --unshallow
-
-    - name: Set up Node.js ${{ matrix.node-version }}
+    - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
-        node-version: ${{ matrix.node-version }}
+        node-version: '16.x'
 
     - name: Install dependencies
-      run: yarn --frozen-lockfile  # Use 'npm install' se preferir
+      run: yarn --frozen-lockfile
 
-    - name: Run tests
-      run: yarn test  # Use 'npm test' se for o seu caso
-
-    - name: Create SSH deployment key
-      if: github.ref == 'refs/heads/main'  # Deploy só será feito na branch 'main'
-      env:
-        SSH_KEY: ${{ secrets.SSH_PRIVATE_KEY }}  # Defina a chave SSH no GitHub Secrets
-      run: ./scripts/deploy.sh
+    - name: Build project (se necessário)
+      run: yarn build
 
     - name: Deploy to Render
-      if: github.ref == 'refs/heads/main'  # Verifica se é a branch 'main'
-      run: |
-        curl -X POST "https://api.render.com/v1/services/YOUR_SERVICE_ID/deploy" \
-        -H "Authorization: Bearer ${{ secrets.RENDER_API_KEY }}"
       env:
-        CI: true
+        RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}  # API Key do Render
+      run: |
+        curl -X POST \
+          -H "Authorization: Bearer $RENDER_API_KEY" \
+          -d '{"branch": "chapter-5-step-5"}' \
+          https://api.render.com/v1/services/{SERVICE_ID}/deploy
