@@ -17,13 +17,14 @@ describe('Forecast Service', () => {
         lng: 151.289824,
         name: 'Manly',
         position: BeachPosition.E,
+        user: 'fake-id',
       },
     ];
     const expectedResponse = [
       {
         time: '2020-04-26T00:00:00+00:00',
         forecast: [
-          {
+          expect.objectContaining({
             lat: -33.792726,
             lng: 151.289824,
             name: 'Manly',
@@ -37,13 +38,13 @@ describe('Forecast Service', () => {
             waveHeight: 0.47,
             windDirection: 299.45,
             windSpeed: 100,
-          },
+          }),
         ],
       },
       {
         time: '2020-04-26T01:00:00+00:00',
         forecast: [
-          {
+          expect.objectContaining({
             lat: -33.792726,
             lng: 151.289824,
             name: 'Manly',
@@ -57,13 +58,13 @@ describe('Forecast Service', () => {
             waveHeight: 0.46,
             windDirection: 310.48,
             windSpeed: 100,
-          },
+          }),
         ],
       },
       {
         time: '2020-04-26T02:00:00+00:00',
         forecast: [
-          {
+          expect.objectContaining({
             lat: -33.792726,
             lng: 151.289824,
             name: 'Manly',
@@ -77,7 +78,7 @@ describe('Forecast Service', () => {
             waveHeight: 0.46,
             windDirection: 321.5,
             windSpeed: 100,
-          },
+          }),
         ],
       },
     ];
@@ -99,6 +100,7 @@ describe('Forecast Service', () => {
         lng: 151.289824,
         name: 'Manly',
         position: BeachPosition.E,
+        user: 'fake-id',
       },
     ];
     mockedStormGlassService.fetchPoints.mockRejectedValue(

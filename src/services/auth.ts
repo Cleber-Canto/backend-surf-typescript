@@ -1,32 +1,33 @@
 import bcrypt from 'bcrypt';
 import config from 'config';
 import jwt from 'jsonwebtoken';
+import { User } from '@src/models/user';
+
+export interface DecodedUser extends Omit<User, '_id'> {
+  id: string;
+}
 
 export default class AuthService {
-  public static async hashPassword(
-    password: string,
-    salt = 10
-  ): Promise<string> {
+  public static async hashPassword(password: string, salt = 10): Promise<string> {
     return await bcrypt.hash(password, salt);
   }
 
-  public static async comparePasswords(
-    password: string,
-    hashedPassword: string
-  ): Promise<boolean> {
+  public static async comparePasswords(password: string, hashedPassword: string): Promise<boolean> {
     return await bcrypt.compare(password, hashedPassword);
   }
 
   public static generateToken(payload: object): string {
-    const secretKey = config.get<string>('App.auth.key') || process.env.JWT_SECRET;
-  
-    if (!secretKey) {
-      throw new Error('JWT secret key is not defined. Set "App.auth.key" in config or "JWT_SECRET" in .env');
+    const secret = config.get<string>('App.auth.key');
+    if (!secret) {
+      throw new Error('Auth key is not defined');
     }
-  
-    return jwt.sign(payload, secretKey, {
-      expiresIn: config.get('App.auth.tokenExpiresIn') || '1h',
+    return jwt.sign(payload, secret, {
+      algorithm: 'HS256',
+      expiresIn: config.get('App.auth.tokenExpiresIn'),
     });
+  }  
+
+  public static decodeToken(token: string): DecodedUser {
+    return jwt.verify(token, config.get('App.auth.key') as string) as DecodedUser;
   }
-  
 }
