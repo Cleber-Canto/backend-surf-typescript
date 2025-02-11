@@ -24,7 +24,11 @@ describe('Forecast Service', () => {
       {
         time: '2020-04-26T00:00:00+00:00',
         forecast: [
+<<<<<<< HEAD
           expect.objectContaining({
+=======
+          {
+>>>>>>> chapter-3-step-2
             lat: -33.792726,
             lng: 151.289824,
             name: 'Manly',
@@ -38,13 +42,21 @@ describe('Forecast Service', () => {
             waveHeight: 0.47,
             windDirection: 299.45,
             windSpeed: 100,
+<<<<<<< HEAD
           }),
+=======
+          },
+>>>>>>> chapter-3-step-2
         ],
       },
       {
         time: '2020-04-26T01:00:00+00:00',
         forecast: [
+<<<<<<< HEAD
           expect.objectContaining({
+=======
+          {
+>>>>>>> chapter-3-step-2
             lat: -33.792726,
             lng: 151.289824,
             name: 'Manly',
@@ -58,13 +70,21 @@ describe('Forecast Service', () => {
             waveHeight: 0.46,
             windDirection: 310.48,
             windSpeed: 100,
+<<<<<<< HEAD
           }),
+=======
+          },
+>>>>>>> chapter-3-step-2
         ],
       },
       {
         time: '2020-04-26T02:00:00+00:00',
         forecast: [
+<<<<<<< HEAD
           expect.objectContaining({
+=======
+          {
+>>>>>>> chapter-3-step-2
             lat: -33.792726,
             lng: 151.289824,
             name: 'Manly',
@@ -78,7 +98,11 @@ describe('Forecast Service', () => {
             waveHeight: 0.46,
             windDirection: 321.5,
             windSpeed: 100,
+<<<<<<< HEAD
           }),
+=======
+          },
+>>>>>>> chapter-3-step-2
         ],
       },
     ];

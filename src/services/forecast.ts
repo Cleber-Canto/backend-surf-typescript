@@ -9,12 +9,15 @@ export interface TimeForecast {
   forecast: BeachForecast[];
 }
 
+<<<<<<< HEAD
 export class ForecastProcessingInternalError extends InternalError {
   constructor(message: string) {
     super(`Unexpected error during the forecast processing: ${message}`);
   }
 }
 
+=======
+>>>>>>> chapter-3-step-2
 export class Forecast {
   constructor(protected stormGlass = new StormGlass()) {}
 
@@ -32,6 +35,10 @@ export class Forecast {
     } catch (error) {
       throw new ForecastProcessingInternalError((error as Error).message);
     }
+<<<<<<< HEAD
+=======
+    return this.mapForecastByTime(pointsWithCorrectSources);
+>>>>>>> chapter-3-step-2
   }
 
   private mapForecastByTime(forecast: BeachForecast[]): TimeForecast[] {
@@ -48,6 +55,7 @@ export class Forecast {
       }
     }
     return forecastByTime;
+<<<<<<< HEAD
   }
 
   private enrichBeachData(
@@ -65,5 +73,7 @@ export class Forecast {
       },
       ...e,
     }));
+=======
+>>>>>>> chapter-3-step-2
   }
 }

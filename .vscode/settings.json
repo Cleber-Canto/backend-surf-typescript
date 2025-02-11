@@ -8,7 +8,10 @@
         "jridgewell",
         "jscoverage",
         "jspm",
+<<<<<<< HEAD
+=======
         "noaa",
+>>>>>>> chapter-3-step-2
         "overnightjs",
         "pids",
         "stormglass",
