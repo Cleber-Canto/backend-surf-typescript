@@ -1,19 +1,6 @@
 import { StormGlass, ForecastPoint } from '@src/clients/stormGlass';
-
-export enum BeachPosition {
-  S = 'S',
-  E = 'E',
-  W = 'W',
-  N = 'N',
-}
-
-export interface Beach {
-  name: string;
-  position: BeachPosition;
-  lat: number;
-  lng: number;
-  user: string;
-}
+import { InternalError } from '@src/util/errors/internal-error';
+import { Beach } from '@src/models/beach';
 
 export interface BeachForecast extends Omit<Beach, 'user'>, ForecastPoint {}
 
@@ -22,6 +9,15 @@ export interface TimeForecast {
   forecast: BeachForecast[];
 }
 
+<<<<<<< HEAD
+export class ForecastProcessingInternalError extends InternalError {
+  constructor(message: string) {
+    super(`Unexpected error during the forecast processing: ${message}`);
+  }
+}
+
+=======
+>>>>>>> chapter-3-step-2
 export class Forecast {
   constructor(protected stormGlass = new StormGlass()) {}
 
@@ -29,22 +25,20 @@ export class Forecast {
     beaches: Beach[]
   ): Promise<TimeForecast[]> {
     const pointsWithCorrectSources: BeachForecast[] = [];
-    for (const beach of beaches) {
-      const points = await this.stormGlass.fetchPoints(beach.lat, beach.lng);
-      const enrichedBeachData = points.map((e) => ({
-        ...{},
-        ...{
-          lat: beach.lat,
-          lng: beach.lng,
-          name: beach.name,
-          position: beach.position,
-          rating: 1, //need to be implemented
-        },
-        ...e,
-      }));
-      pointsWithCorrectSources.push(...enrichedBeachData);
+    try {
+      for (const beach of beaches) {
+        const points = await this.stormGlass.fetchPoints(beach.lat, beach.lng);
+        const enrichedBeachData = this.enrichBeachData(points, beach);
+        pointsWithCorrectSources.push(...enrichedBeachData);
+      }
+      return this.mapForecastByTime(pointsWithCorrectSources);
+    } catch (error) {
+      throw new ForecastProcessingInternalError((error as Error).message);
     }
+<<<<<<< HEAD
+=======
     return this.mapForecastByTime(pointsWithCorrectSources);
+>>>>>>> chapter-3-step-2
   }
 
   private mapForecastByTime(forecast: BeachForecast[]): TimeForecast[] {
@@ -61,5 +55,25 @@ export class Forecast {
       }
     }
     return forecastByTime;
+<<<<<<< HEAD
+  }
+
+  private enrichBeachData(
+    points: ForecastPoint[],
+    beach: Beach
+  ): BeachForecast[] {
+    return points.map((e) => ({
+      ...{},
+      ...{
+        lat: beach.lat,
+        lng: beach.lng,
+        name: beach.name,
+        position: beach.position,
+        rating: 1,
+      },
+      ...e,
+    }));
+=======
+>>>>>>> chapter-3-step-2
   }
 }
