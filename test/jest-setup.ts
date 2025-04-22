@@ -1,20 +1,31 @@
 import { SetupServer } from '@src/server';
-import supertest from 'supertest';
+import supertest, { SuperTest, Test } from 'supertest';
+import path from 'path';
+import {
+  DockerComposeEnvironment,
+  StartedDockerComposeEnvironment,
+  Wait,
+} from 'testcontainers';
+
+const composeFilePath = path.resolve(__dirname, '..');
+const composeFile = 'docker-compose.yml';
+let environment: StartedDockerComposeEnvironment;
 
 let server: SetupServer;
 
+jest.setTimeout(20000);
+
 beforeAll(async () => {
+  environment = await new DockerComposeEnvironment(composeFilePath, composeFile)
+    .withWaitStrategy('mongodb', Wait.forHealthCheck())
+    .up(['mongodb']);
+
   server = new SetupServer();
   await server.init();
-  global.testRequest = supertest(server.getApp()) as unknown as supertest.SuperTest<supertest.Test>;
+  global.testRequest = supertest(server.getApp()) as unknown as SuperTest<Test>;
 });
 
 afterAll(async () => {
-  if (server) {
-    try {
-      await server.close(); // Fechar o servidor sem logs desnecessários
-    } catch (error) {
-      console.error('Erro ao fechar o servidor:', error); // Logar o erro caso ocorra
-    }
-  }
+  await server.close();
+  await environment.down();
 });
