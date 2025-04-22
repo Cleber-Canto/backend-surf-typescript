@@ -8,11 +8,11 @@ export function authMiddleware(
 ): void {
   const token = req.headers?.['x-access-token'];
   try {
-    const decoded = AuthService.decodeToken(token as string);
-    req.decoded = decoded;
+    const claims = AuthService.decodeToken(token as string);
+    req.context = { userId: claims.sub };
     next();
   } catch (err) {
-    if(err instanceof Error) {
+    if (err instanceof Error) {
       res.status?.(401).send({ code: 401, error: err.message });
     } else {
       res.status?.(401).send({ code: 401, error: 'Unknown auth error' });

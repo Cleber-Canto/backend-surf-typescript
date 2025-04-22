@@ -1,12 +1,11 @@
-import { User } from '@src/models/user';
+import { UserMongoDBRepository } from '@src/repositories/userMongoDBRepository';
 import AuthService from '@src/services/auth';
 
 describe('Users functional tests', () => {
+  const defaultUserRepository = new UserMongoDBRepository();
   beforeEach(async () => {
-    // Limpa todos os usuários antes de rodar os testes
-    await User.deleteMany({});
+    await defaultUserRepository.deleteAll();
   });
-
   describe('When creating a new user', () => {
     it('should successfully create a new user with encrypted password', async () => {
       const newUser = {
@@ -14,44 +13,35 @@ describe('Users functional tests', () => {
         email: 'john@mail.com',
         password: '1234',
       };
-
-      // Criação do usuário via POST
       const response = await global.testRequest.post('/users').send(newUser);
       expect(response.status).toBe(201);
-
-      // Verifica se a senha não está em texto simples (verifica se foi criptografada)
-      expect(response.body.password).not.toBe(newUser.password);
-
-      // Verifica se a senha criptografada corresponde à senha em texto simples
       await expect(
         AuthService.comparePasswords(newUser.password, response.body.password)
       ).resolves.toBeTruthy();
-
-      // Verifica se os dados do usuário foram salvos corretamente
       expect(response.body).toEqual(
         expect.objectContaining({
           ...newUser,
-          password: expect.any(String), // Espera que a senha seja uma string (criptografada)
+          ...{ password: expect.any(String) },
         })
       );
     });
 
-    it('should return 422 when there is a validation error', async () => {
+    it('Should return a validation error when a field is missing', async () => {
       const newUser = {
         email: 'john@mail.com',
         password: '1234',
       };
-
       const response = await global.testRequest.post('/users').send(newUser);
 
-      expect(response.status).toBe(422);
+      expect(response.status).toBe(400);
       expect(response.body).toEqual({
-        code: 422,
-        error: 'User validation failed: name: Path `name` is required.',
+        code: 400,
+        error: 'Bad Request',
+        message: 'User validation failed: name: Path `name` is required.',
       });
     });
 
-    it('should return 409 when the email already exists', async () => {
+    it('Should return 409 when the email already exists', async () => {
       const newUser = {
         name: 'John Doe',
         email: 'john@mail.com',
@@ -63,30 +53,29 @@ describe('Users functional tests', () => {
       expect(response.status).toBe(409);
       expect(response.body).toEqual({
         code: 409,
-        error: 'User validation failed: email: already exists in the database.',
+        error: 'Conflict',
+        message:
+          'User validation failed: email: already exists in the database.',
       });
     });
   });
 
-  describe('When authenticating a user', () => {
+  describe('when authenticating a user', () => {
     it('should generate a token for a valid user', async () => {
       const newUser = {
         name: 'John Doe',
         email: 'john@mail.com',
         password: '1234',
       };
-      await new User(newUser).save();
-
+      const user = await defaultUserRepository.create(newUser);
       const response = await global.testRequest
         .post('/users/authenticate')
         .send({ email: newUser.email, password: newUser.password });
 
-      expect(response.body).toEqual(
-        expect.objectContaining({ token: expect.any(String) })
-      );
+      const JwtClaims = AuthService.decodeToken(response.body.token);
+      expect(JwtClaims).toMatchObject({ sub: user.id });
     });
-
-    it('should return UNAUTHORIZED if the user with the given email is not found', async () => {
+    it('Should return UNAUTHORIZED if the user with the given email is not found', async () => {
       const response = await global.testRequest
         .post('/users/authenticate')
         .send({ email: 'some-email@mail.com', password: '1234' });
@@ -94,18 +83,47 @@ describe('Users functional tests', () => {
       expect(response.status).toBe(401);
     });
 
-    it('should return UNAUTHORIZED if the user is found but the password does not match', async () => {
+    it('Should return UNAUTHORIZED if the user is found but the password does not match', async () => {
       const newUser = {
         name: 'John Doe',
         email: 'john@mail.com',
         password: '1234',
       };
-      await new User(newUser).save();
+      await defaultUserRepository.create(newUser);
       const response = await global.testRequest
         .post('/users/authenticate')
         .send({ email: newUser.email, password: 'different password' });
 
       expect(response.status).toBe(401);
+    });
+  });
+
+  describe('When getting user profile info', () => {
+    it(`Should return the token's owner profile information`, async () => {
+      const newUser = {
+        name: 'John Doe',
+        email: 'john@mail.com',
+        password: '1234',
+      };
+      const user = await defaultUserRepository.create(newUser);
+      const token = AuthService.generateToken(user.id);
+      const { body, status } = await global.testRequest
+        .get('/users/me')
+        .set({ 'x-access-token': token });
+
+      expect(status).toBe(200);
+      expect(body).toMatchObject(JSON.parse(JSON.stringify({ user })));
+    });
+
+    it(`Should return Not Found, when the user is not found`, async () => {
+      //create a new user but don't save it
+      const token = AuthService.generateToken('fake-user-id');
+      const { body, status } = await global.testRequest
+        .get('/users/me')
+        .set({ 'x-access-token': token });
+
+      expect(status).toBe(404);
+      expect(body.message).toBe('User not found!');
     });
   });
 });

@@ -1,58 +1,67 @@
-import { Controller, Post, Get } from '@overnightjs/core';
+import { Controller, Post, Get, Middleware } from '@overnightjs/core';
 import { Response, Request } from 'express';
-import { User } from '@src/models/user';
 import AuthService from '@src/services/auth';
 import { BaseController } from './index';
+import { authMiddleware } from '@src/middlewares/auth';
+import { UserRepository } from '@src/repositories';
 
 @Controller('users')
 export class UsersController extends BaseController {
+  constructor(private userRepository: UserRepository) {
+    super();
+  }
+
   @Post('')
   public async create(req: Request, res: Response): Promise<void> {
     try {
-      const user = new User(req.body);
-      const newUser = await user.save();
-      console.log('Novo usuário criado:', newUser); // Log no terminal
+      const newUser = await this.userRepository.create(req.body);
       res.status(201).send(newUser);
     } catch (error) {
-      console.error('Erro ao criar usuário:', error); // Log de erro
       this.sendCreateUpdateErrorResponse(res, error);
     }
   }
 
   @Post('authenticate')
   public async authenticate(req: Request, res: Response): Promise<Response> {
-    try {
-      const user = await User.findOne({ email: req.body.email });
-      if (!user) {
-        console.warn('Tentativa de login com email não cadastrado:', req.body.email);
-        return res.status(401).send({ code: 401, error: 'User not found!' });
-      }
-      
-      const passwordMatch = await AuthService.comparePasswords(req.body.password, user.password);
-      if (!passwordMatch) {
-        console.warn('Tentativa de login com senha incorreta para o usuário:', req.body.email);
-        return res.status(401).send({ code: 401, error: 'Password does not match!' });
-      }
-      
-      const token = AuthService.generateToken(user.toJSON());
-      console.log('Usuário autenticado com sucesso:', user.email);
-      
-      return res.send({ ...user.toJSON(), ...{ token } });
-    } catch (error) {
-      console.error('Erro ao autenticar usuário:', error); // Log de erro
-      return res.status(500).send({ code: 500, error: 'Internal server error' });
+    const user = await this.userRepository.findOneByEmail(req.body.email);
+    if (!user) {
+      return this.sendErrorResponse(res, {
+        code: 401,
+        message: 'User not found!',
+        description: 'Try verifying your email address.',
+      });
     }
+    if (
+      !(await AuthService.comparePasswords(req.body.password, user.password))
+    ) {
+      return this.sendErrorResponse(res, {
+        code: 401,
+        message: 'Password does not match!',
+      });
+    }
+    const token = AuthService.generateToken(user.id);
+
+    return res.send({ ...user, ...{ token } });
   }
 
-  @Get('')
-  public async getAllUsers(req: Request, res: Response): Promise<Response> {
-    try {
-      const users = await User.find();
-      console.log('Lista de usuários retornada:', users);
-      return res.status(200).json({ message: 'Lista de usuários', data: users });
-    } catch (error) {
-      console.error('Erro ao buscar usuários:', error);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
+  @Get('me')
+  @Middleware(authMiddleware)
+  public async me(req: Request, res: Response): Promise<Response> {
+    const userId = req.context?.userId;
+    if (!userId) {
+      return this.sendErrorResponse(res, {
+        code: 404,
+        message: 'user id not provided',
+      });
     }
+    const user = await this.userRepository.findOneById(userId);
+    if (!user) {
+      return this.sendErrorResponse(res, {
+        code: 404,
+        message: 'User not found!',
+      });
+    }
+
+    return res.send({ user });
   }
 }
